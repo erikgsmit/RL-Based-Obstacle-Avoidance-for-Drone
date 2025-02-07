@@ -92,8 +92,8 @@ This will load the simulation world and within this simulation world you should 
 
 ## 🙌 Contributors
 
-- **Erik Smit** - [GitHub Profile](https://github.com/erikgsmit)
-- **Hugo Larsson Wilhelmsson** [GitHub Profile](https://github.com/hugoahus)
+- **Erik Smit** - [erikgsmit](https://github.com/erikgsmit)
+- **Hugo Larsson Wilhelmsson** [hugoahus](https://github.com/hugoahus)
 
 
 
