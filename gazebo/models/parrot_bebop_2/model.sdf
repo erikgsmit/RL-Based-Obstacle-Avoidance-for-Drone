@@ -67,7 +67,6 @@
       </visual>
     </link>
 
-    <!-- Similar collision elements should be added for other propellers -->
     <link name="propeller_fr">
       <pose>0.08456 -0.11435 -0.00501 0 0 0</pose>
       <inertial>
@@ -154,6 +153,56 @@
         </geometry>
       </visual>
     </link>
+
+     <!-- Joints connecting propellers to the main body -->
+    <joint name="joint_propeller_fl" type="revolute">
+      <parent>body</parent>
+      <child>propeller_fl</child>
+      <axis>
+        <xyz>0 0 1</xyz>  <!-- Rotation around the Z-axis -->
+        <limit>
+          <lower>-3.14</lower>
+          <upper>3.14</upper>
+        </limit>
+      </axis>
+    </joint>
+
+    <joint name="joint_propeller_fr" type="revolute">
+      <parent>body</parent>
+      <child>propeller_fr</child>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-3.14</lower>
+          <upper>3.14</upper>
+        </limit>
+      </axis>
+    </joint>
+
+    <joint name="joint_propeller_rl" type="revolute">
+      <parent>body</parent>
+      <child>propeller_rl</child>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-3.14</lower>
+          <upper>3.14</upper>
+        </limit>
+      </axis>
+    </joint>
+
+    <joint name="joint_propeller_rr" type="revolute">
+      <parent>body</parent>
+      <child>propeller_rr</child>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-3.14</lower>
+          <upper>3.14</upper>
+        </limit>
+      </axis>
+    </joint>
+
 
   </model>
 </sdf>
