@@ -1,6 +1,10 @@
 <?xml version="1.0" ?>
 <sdf version="1.10">
     <world name="drone_world">
+    <include>
+        <uri>model://parrot_bebop_2</uri>
+        <pose>0 0 1 0 0 0</pose> <!-- x,y,z,r,p,y-->
+    </include>
         <physics name="1ms" type="ignored">
             <max_step_size>0.001</max_step_size>
             <real_time_factor>1.0</real_time_factor>
