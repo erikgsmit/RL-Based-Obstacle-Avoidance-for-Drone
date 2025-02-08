@@ -90,10 +90,16 @@ This will load the simulation world and within this simulation world you should 
 
 ---
 
+## 📖 Resources
+
+Here is a list of useful resources:
+- [Gazebo Guide](https://gazebosim.org/docs/latest/getstarted/)
+
+
 ## 🙌 Contributors
 
 - **Erik Smit** - [erikgsmit](https://github.com/erikgsmit)
-- **Hugo Larsson Wilhelmsson** [hugoahus](https://github.com/hugoahus)
+- **Hugo Larsson Wilhelmsson** - [hugoahus](https://github.com/hugoahus)
 
 
 
