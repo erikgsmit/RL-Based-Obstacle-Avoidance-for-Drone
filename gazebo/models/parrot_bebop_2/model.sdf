@@ -154,16 +154,23 @@
       </visual>
     </link>
 
-     <!-- Joints connecting propellers to the main body -->
-    <joint name="joint_propeller_fl" type="revolute">
+    <!-- Joints -->
+  
+
+     <joint name="joint_propeller_fl" type="revolute">
       <parent>body</parent>
       <child>propeller_fl</child>
       <axis>
-        <xyz>0 0 1</xyz>  <!-- Rotation around the Z-axis -->
+        <xyz>0 0 1</xyz>
         <limit>
           <lower>-3.14</lower>
           <upper>3.14</upper>
+          <effort>1e6</effort>
         </limit>
+        <dynamics>
+          <damping>0.01</damping>
+          <friction>0.001</friction>
+        </dynamics>
       </axis>
     </joint>
 
@@ -175,7 +182,12 @@
         <limit>
           <lower>-3.14</lower>
           <upper>3.14</upper>
+          <effort>1e6</effort>
         </limit>
+        <dynamics>
+          <damping>0.01</damping>
+          <friction>0.001</friction>
+        </dynamics>
       </axis>
     </joint>
 
@@ -187,7 +199,12 @@
         <limit>
           <lower>-3.14</lower>
           <upper>3.14</upper>
+          <effort>1e6</effort>
         </limit>
+        <dynamics>
+          <damping>0.01</damping>
+          <friction>0.001</friction>
+        </dynamics>
       </axis>
     </joint>
 
@@ -199,9 +216,16 @@
         <limit>
           <lower>-3.14</lower>
           <upper>3.14</upper>
+          <effort>1e6</effort>
         </limit>
+        <dynamics>
+          <damping>0.01</damping>
+          <friction>0.001</friction>
+        </dynamics>
       </axis>
     </joint>
+
+     
 
 
   </model>
