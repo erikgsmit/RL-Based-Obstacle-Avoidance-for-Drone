@@ -82,6 +82,13 @@ At the moment you can try to run the simulation by running the follwoing command
 gz sim gazebo/environments/environment.sdf 
 ```
 
+If you wish to test the drone movement, you can run the following command in a seperate terminal window
+
+```bash
+gz topic -t /X3/gazebo/command/motor_speed --msgtype gz.msgs.Actuators -p 'velocity:[700, 700, 700, 700]'
+```
+
+
 This will load the simulation world and within this simulation world you should be able to spawn a drone by searching for **Resource Spawner**
 
 
