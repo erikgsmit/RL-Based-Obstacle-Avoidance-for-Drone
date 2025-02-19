@@ -103,6 +103,7 @@ gz topic -t /X3/gazebo/command/motor_speed --msgtype gz.msgs.Actuators -p 'veloc
 
 Here is a list of useful resources:
 - [Gazebo Guide](https://gazebosim.org/docs/latest/getstarted/)
+- [RL with Gazebo and ROS](https://github.com/vmayoral/basic_reinforcement_learning/blob/master/tutorial7/README.md)
 
 
 ## 🙌 Contributors
