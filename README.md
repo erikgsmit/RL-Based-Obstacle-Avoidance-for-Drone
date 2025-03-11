@@ -2,31 +2,13 @@
 
 ## 🚀 Project Overview
 
-This project aims to simulate a drone with LIDAR in **Gazebo Harmonic** for **reinforcement learning-based obstacle avoidance**. The simulation environment is built using **Gazebo Harmonic**.
+This project aims to simulate a drone with LIDAR in **Gazebo Harmonic** for **reinforcement learning-based obstacle avoidance**. The simulation environment is built using **Gazebo Harmonic** and integrated with ROS 2 Jazzy. This is built for **Ubuntu Noble 24.04**. 
 
 ---
 
 ## 📁 Project Structure
 
-```
-RL-Based-Obstacle-Avoidance-for-Drone/
-│── gazebo/                        # Gazebo simulation models & environments
-│   ├── models/
-│   │   ├── parrot_bebop_2/         # Prebuilt Bebop 2 drone model
-│   ├── environments/
-│   │   ├── environment.sdf         # Simulation world file
-│
-│── src/                            # Python RL & drone control code
-|   ├── drone_control.py           # Drone control
-│   ├── drone_env.py                # Gym RL environment wrapper
-│   ├── train_rl.py                 # RL training script
-│   ├── test_rl.py                  # RL model evaluation
-
-│── README.md                       # Project documentation
-│── requirements.txt                 # Python dependencies
-│── setup.sh                         # Setup script for dependencies
-│── .gitignore                       # Ignore unnecessary files
-```
+TO BE IMPLEMENTED
 
 ---
 
@@ -42,7 +24,7 @@ sudo apt-get update
 sudo apt-get install curl lsb-release gnupg
 ```
 
-Install Gazebo by running the following command:
+Install Gazebo Harmonic by running the following command or follow their [installation guide](https://gazebosim.org/docs/harmonic/install_ubuntu/):
 
 
 ```bash
@@ -62,32 +44,39 @@ gz sim --verbose
 ### **3️⃣ Set Up Gazebo Resource Path**
 
 ```bash
-export GZ_SIM_RESOURCE_PATH=$GZ_SIM_RESOURCE_PATH:$(pwd)/gazebo/models
+export GZ_SIM_RESOURCE_PATH=$GZ_SIM_RESOURCE_PATH:~/RL-Based-Obstacle-Avoidance-for-Drone/install/rl_obstacle_avoidance/share/rl_obstacle_avoidance/models
+
 ```
 
-To make this change permanent (might add .env file later):
+To make this change permanent you can add it to your `.bashrc` file (might add .env file later):
 
-```bash
-echo 'export GZ_SIM_RESOURCE_PATH=$GZ_SIM_RESOURCE_PATH:$(pwd)/gazebo/models' >> ~/.bashrc
-source ~/.bashrc
-```
+### **4️⃣ Install ROS 2 Jazzy**
+
+The next step is to install ROS 2 Jazzy. Please refer to this [installtion guide for ROS 2 Jazzy](https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html).
 
 ---
 
 ## 🏗️ Running the Simulation
 
-At the moment you can try to run the simulation by running the follwoing command
+First you must build the ROS package, and for this you might have to install **colcon**. After installing colcon, plese run the following command to build the package:
 
 ```bash
-gz sim gazebo/environments/drone_world.sdf 
+colcon build --symlink-install
+source install/setup.bash
 ```
 
-This will load the simulation world and within this simulation world you should be able to spawn a drone by searching for **Resource Spawner**
+Then you can launch the simulation using the following command:
+
+```bash
+ros2 launch rl_obstacle_avoidance gz_sim.launch.py
+```
+
+This will load the simulation world.
 
 If you wish to test the drone movement, you can run the following command in a seperate terminal window
 
 ```bash
-gz topic -t /X3/gazebo/command/motor_speed --msgtype gz.msgs.Actuators -p 'velocity:[700, 700, 700, 700]'
+gz topic -t <drone_topic> --msgtype gz.msgs.Actuators -p 'velocity:[700, 700, 700, 700]'
 ```
 
 To view all the available topics enter the following command:
