@@ -8,7 +8,7 @@ def lidar_callback(msg):
         
 def main():
     node = gz_transport.Node()  # Create a node
-    topic_lidar = "/lidar" # Topic name
+    topic_lidar = "/lidar/x3" # Topic name
     node.subscribe(LaserScan, topic_lidar, lidar_callback) 
     
     # Wait for shutdown

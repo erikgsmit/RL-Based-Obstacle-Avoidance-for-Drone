@@ -14,6 +14,16 @@ setup(
         ('share/' + package_name, ['package.xml']),
         (os.path.join('share', package_name, 'launch'), glob('launch/*.py')),
         (os.path.join('share', package_name, 'worlds'), glob('worlds/*.sdf')),
+        
+        # X3 UAV
+        (os.path.join('share', package_name, 'models/x3'), 
+         glob('models/x3/*.sdf') + glob('models/x3/*.config')),
+        *[(os.path.join('share', package_name, 'models/x3/meshes'), 
+           glob('models/x3/meshes/*'))],
+        *[(os.path.join('share', package_name, 'models/x3/thumbnails'), 
+           glob('models/x3/thumbnails/*'))],
+        
+        # Parrot Bebop 2
         (os.path.join('share', package_name, 'models/parrot_bebop_2'), 
          glob('models/parrot_bebop_2/*.sdf') + glob('models/parrot_bebop_2/*.config')),
         # Copy all individual files in meshes/
