@@ -6,7 +6,7 @@
 
 - ros_topic_name: "/X3/gazebo/command/motor_speed"
   gz_topic_name: "/X3/gazebo/command/motor_speed"
-  ros_type_name: "geometry_msgs/msg/Twist"
+  ros_type_name: "actuator_msgs/msg/Actuators"
   gz_type_name: "gz.msgs.Actuators"
   direction: ROS_TO_GZ
 
