@@ -91,118 +91,185 @@
       </plugin>   
     </include>
 
-      <physics name="1ms" type="ignored">
-          <max_step_size>0.001</max_step_size>
-          <real_time_factor>1.0</real_time_factor>
-      </physics>
-      <plugin
-          filename="gz-sim-physics-system"
-          name="gz::sim::systems::Physics">
-      </plugin>
-      <plugin
-          filename="gz-sim-user-commands-system"
-          name="gz::sim::systems::UserCommands">
-      </plugin>
-      <plugin
-          filename="gz-sim-scene-broadcaster-system"
-          name="gz::sim::systems::SceneBroadcaster">
-      </plugin>
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+    <plugin
+      filename="gz-sim-physics-system"
+      name="gz::sim::systems::Physics">
+    </plugin>
+    <plugin
+      filename="gz-sim-user-commands-system"
+      name="gz::sim::systems::UserCommands">
+    </plugin>
+    <plugin
+        filename="gz-sim-scene-broadcaster-system"
+        name="gz::sim::systems::SceneBroadcaster">
+    </plugin>
 
-      <light type="directional" name="sun">
-          <cast_shadows>true</cast_shadows>
-          <pose>0 0 10 0 0 0</pose>
-          <diffuse>0.8 0.8 0.8 1</diffuse>
-          <specular>0.2 0.2 0.2 1</specular>
-          <attenuation>
-              <range>1000</range>
-              <constant>0.9</constant>
-              <linear>0.01</linear>
-              <quadratic>0.001</quadratic>
-          </attenuation>
-          <direction>-0.5 0.1 -0.9</direction>
-      </light>
 
-      <model name="ground_plane">
-          <static>true</static>
-          <link name="link">
-              <collision name="collision">
-              <geometry>
-                  <plane>
-                  <normal>0 0 1</normal>
-                  </plane>
-              </geometry>
-              </collision>
-              <visual name="visual">
-              <geometry>
-                  <plane>
-                  <normal>0 0 1</normal>
-                  <size>100 100</size>
-                  </plane>
-              </geometry>
-              <material>
-                  <ambient>0.8 0.8 0.8 1</ambient>
-                  <diffuse>0.8 0.8 0.8 1</diffuse>
-                  <specular>0.8 0.8 0.8 1</specular>
-              </material>
-              </visual>
-          </link>
-      </model>
+    <light type="directional" name="sun">
+        <cast_shadows>true</cast_shadows>
+        <pose>0 0 10 0 0 0</pose>
+        <diffuse>0.8 0.8 0.8 1</diffuse>
+        <specular>0.2 0.2 0.2 1</specular>
+        <attenuation>
+            <range>1000</range>
+            <constant>0.9</constant>
+            <linear>0.01</linear>
+            <quadratic>0.001</quadratic>
+        </attenuation>
+        <direction>-0.5 0.1 -0.9</direction>
+    </light>
 
-      <actor name="actor_walking">
-        <skin>
-          <filename>https://fuel.gazebosim.org/1.0/Mingfei/models/actor/tip/files/meshes/walk.dae</filename>
-          <scale>1.0</scale>
-        </skin>
-        <animation name="walk">
-          <filename>https://fuel.gazebosim.org/1.0/Mingfei/models/actor/tip/files/meshes/walk.dae</filename>
-          <interpolate_x>true</interpolate_x>
-        </animation>
+    <model name="ground_plane">
+        <static>true</static>
+        <link name="link">
+            <collision name="collision">
+            <geometry>
+                <plane>
+                <normal>0 0 1</normal>
+                </plane>
+            </geometry>
+            </collision>
+            <visual name="visual">
+            <geometry>
+                <plane>
+                <normal>0 0 1</normal>
+                <size>20 20</size>
+                </plane>
+            </geometry>
+            <material>
+                <ambient>0.8 0.8 0.8 1</ambient>
+                <diffuse>0.8 0.8 0.8 1</diffuse>
+                <specular>0.8 0.8 0.8 1</specular>
+            </material>
+            </visual>
+        </link>
+    </model>
 
-        <script>
-          <loop>true</loop>
-          <delay_start>0.000000</delay_start>
-          <auto_start>true</auto_start>
+    <model name="box_1">
+        <static>true</static>
+        <link name="link">
+            <visual name="visual">
+                <geometry>
+                    <box>
+                        <size>1 20 5</size>  <!-- Width, Depth, Height in meters -->
+                    </box>
+                </geometry>
+                <material>
+                    <ambient>0.7 0.7 0.7 1</ambient>
+                </material>
+            </visual>
+            <collision name="collision">
+                <geometry>
+                    <box>
+                        <size>1 20 5</size>
+                    </box>
+                </geometry>
+            </collision>
+        </link>
+        <pose>5 0 0 0 0 0</pose>
+    </model>
 
-          <trajectory id="0" type="walk" tension="0.6">
-            <waypoint>
-                <time>0</time>
-                <pose>0 0 1.0 0 0 0</pose>
-            </waypoint>
-            <waypoint>
-                <time>4</time>
-                <pose>2.0 0 1.0 0 0 0</pose>
-            </waypoint>
-            <waypoint>
-                <time>5</time>
-                <pose>2 0 1.0 0 0 1.57</pose>
-            </waypoint>
-            <waypoint>
-                <time>8</time>
-                <pose>2 2 1.0 0 0 1.57</pose>
-            </waypoint>
-            <waypoint>
-                <time>9</time>
-                <pose>2 2 1.0 0 0 3.142</pose>
-            </waypoint>
-            <waypoint>
-                <time>12</time>
-                <pose>0 2 1 0 0 3.142</pose>
-            </waypoint>
-            <waypoint>
-                <time>13</time>
-                <pose>0 2 1 0 0 -1.57</pose>
-            </waypoint>
-            <waypoint>
-                <time>16</time>
-                <pose>0 0 1.0 0 0 -1.57</pose>
-            </waypoint>
-            <waypoint>
-                <time>17</time>
-                <pose>0 0 1.0 0 0 0</pose>
-            </waypoint>
-          </trajectory>
-        </script>
-      </actor> 
+    <!-- Start Point -->
+    <model name="start_marker">
+        <static>true</static>
+        <link name="link">
+            <visual name="visual">
+                <geometry>
+                    <cylinder>
+                        <radius>0.1</radius>
+                        <length>0.8</length>
+                    </cylinder>
+                </geometry>
+                <material>
+                    <ambient>0 1 0 1</ambient>  <!-- Green color -->
+                    <diffuse>0 1 0 1</diffuse>  <!-- Green Diffuse -->
+                    <specular>0.5 0.5 0.5 1</specular>  <!-- Add Specular to Reflect Light -->
+                </material>
+            </visual>
+        </link>
+        <pose>-3,3 0 0 0 0 0</pose>  <!-- Adjust position -->
+    </model>
+
+    <!-- End Point -->
+    <model name="end_marker">
+        <static>true</static>
+        <link name="link">
+            <visual name="visual">
+                <geometry>
+                    <cylinder>
+                        <radius>0.1</radius>
+                        <length>0.8</length>
+                    </cylinder>
+                </geometry>
+                <material>
+                    <ambient>1 0 0 1</ambient>  <!-- Red color -->
+                    <diffuse>1 0 0 1</diffuse>  <!-- Red Diffuse -->
+                    <specular>0.5 0.5 0.5 1</specular>  <!-- Add Specular to Reflect Light -->
+                </material>
+            </visual>
+        </link>
+        <pose>9 0 0 0 0 0</pose>  <!-- Adjust position -->
+    </model>
+
+    <actor name="actor_walking">
+      <skin>
+        <filename>https://fuel.gazebosim.org/1.0/Mingfei/models/actor/tip/files/meshes/walk.dae</filename>
+        <scale>1.0</scale>
+      </skin>
+      <animation name="walk">
+        <filename>https://fuel.gazebosim.org/1.0/Mingfei/models/actor/tip/files/meshes/walk.dae</filename>
+        <interpolate_x>true</interpolate_x>
+      </animation>
+
+      <script>
+        <loop>true</loop>
+        <delay_start>0.000000</delay_start>
+        <auto_start>true</auto_start>
+
+        <trajectory id="0" type="walk" tension="0.6">
+          <waypoint>
+              <time>0</time>
+              <pose>0 -1 1.0 0 0 0</pose>
+          </waypoint>
+          <waypoint>
+              <time>4</time>
+              <pose>2.0 -1 1.0 0 0 0</pose>
+          </waypoint>
+          <waypoint>
+              <time>5</time>
+              <pose>2 -1 1.0 0 0 1.57</pose>
+          </waypoint>
+          <waypoint>
+              <time>8</time>
+              <pose>2 1 1.0 0 0 1.57</pose>
+          </waypoint>
+          <waypoint>
+              <time>9</time>
+              <pose>2 1 1.0 0 0 3.142</pose>
+          </waypoint>
+          <waypoint>
+              <time>12</time>
+              <pose>0 1 1 0 0 3.142</pose>
+          </waypoint>
+          <waypoint>
+              <time>13</time>
+              <pose>0 1 1 0 0 -1.57</pose>
+          </waypoint>
+          <waypoint>
+              <time>16</time>
+              <pose>0 -1 1.0 0 0 -1.57</pose>
+          </waypoint>
+          <waypoint>
+              <time>17</time>
+              <pose>0 -1 1.0 0 0 0</pose>
+          </waypoint>
+        </trajectory>
+      </script>
+    </actor> 
   
   </world>
 </sdf>
