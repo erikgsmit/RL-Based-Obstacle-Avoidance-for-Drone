@@ -1,11 +1,12 @@
 - ros_topic_name: "/lidar/x3"
   gz_topic_name: "/lidar/x3"
   ros_type_name: "sensor_msgs/msg/LaserScan"
-  gz_type_name: "ignition.msgs.LaserScan"
+  gz_type_name: "gz.msgs.LaserScan"
   direction: GZ_TO_ROS
 
 - ros_topic_name: "/X3/gazebo/command/motor_speed"
   gz_topic_name: "/X3/gazebo/command/motor_speed"
   ros_type_name: "geometry_msgs/msg/Twist"
-  gz_type_name: "ignition.msgs.Twist"
+  gz_type_name: "gz.msgs.Actuators"
   direction: ROS_TO_GZ
+
