@@ -37,4 +37,11 @@ def generate_launch_description():
             bridge_name="ros_gz_bridge",
             config_file=bridge_config,
         ),
+
+        Node(
+            package='rl_obstacle_avoidance',
+            executable='pose_subscriber',
+            name='pose_subscriber',
+            output='screen',
+        ),
     ])
