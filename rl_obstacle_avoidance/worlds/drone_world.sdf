@@ -7,8 +7,9 @@
       <render_engine>ogre2</render_engine>
     </plugin>
     <include>
-      <pose>-3 0 0 0 0 0</pose>
-      <uri>model://x3</uri>
+        <pose>-3 0 0 0 0 0</pose>
+        <uri>model://x3</uri>
+      
       <plugin
         filename="gz-sim-multicopter-motor-model-system"
         name="gz::sim::systems::MulticopterMotorModel">
@@ -88,7 +89,72 @@
         <motorSpeedPubTopic>motor_speed/3</motorSpeedPubTopic>
         <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
         <motorType>velocity</motorType>
-      </plugin>   
+      </plugin>  
+
+      <!-- Adding the MulticopterVelocityControl plugin here -->
+        <plugin filename="gz-sim-multicopter-control-system" name="gz::sim::systems::MulticopterVelocityControl">
+            <robotNamespace>X3</robotNamespace>
+            <commandSubTopic>cmd_vel</commandSubTopic>  <!-- Enables velocity control via ROS 2 -->
+            <enableSubTopic>enable</enableSubTopic>
+            <comLinkName>X3/base_link</comLinkName>  <!-- Ensure this matches your drone's main body link -->
+
+            <velocityGain>
+                <x>10.0</x>
+                <y>10.0</y>
+                <z>10.0</z>
+            </velocityGain>
+
+            <attitudeGain>
+                <roll>10.0</roll>
+                <pitch>10.0</pitch>
+                <yaw>10.0</yaw>
+            </attitudeGain>
+
+            <angularRateGain>
+                <roll>0.5</roll>
+                <pitch>0.5</pitch>
+                <yaw>0.5</yaw>
+            </angularRateGain>
+
+            <maximumLinearVelocity>
+                <x>1000.0</x>
+                <y>1000.0</y>
+                <z>1000.0</z>
+            </maximumLinearVelocity>
+
+            <maximumAngularVelocity>
+                <roll>10.0</roll>
+                <pitch>10.0</pitch>
+                <yaw>10.0</yaw>
+            </maximumAngularVelocity>
+
+            <rotorConfiguration>
+                <rotor>
+                    <jointName>X3/rotor_0_joint</jointName>
+                    <forceConstant>1.0</forceConstant>
+                    <momentConstant>0.1</momentConstant>
+                    <direction>1</direction>
+                </rotor>
+                <rotor>
+                    <jointName>X3/rotor_1_joint</jointName>
+                    <forceConstant>1.0</forceConstant>
+                    <momentConstant>0.1</momentConstant>
+                    <direction>-1</direction>
+                </rotor>
+                <rotor>
+                    <jointName>X3/rotor_2_joint</jointName>
+                    <forceConstant>1.0</forceConstant>
+                    <momentConstant>0.1</momentConstant>
+                    <direction>-1</direction>
+                </rotor>
+                <rotor>
+                    <jointName>X3/rotor_3_joint</jointName>
+                    <forceConstant>1.0</forceConstant>
+                    <momentConstant>0.1</momentConstant>
+                    <direction>1</direction>
+                </rotor>
+            </rotorConfiguration>
+        </plugin> 
     </include>
 
     <physics name="1ms" type="ignored">
