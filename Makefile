@@ -15,7 +15,7 @@ source:
 # Command to launch Gazebo with your simulation
 run: build
 	@echo "Launching Gazebo simulation..."
-	@bash -c "source /opt/ros/jazzy/setup.bash && source $(ROS2_WS)/install/setup.bash && ros2 launch rl_obstacle_avoidance gz_sim.launch.py"
+	@bash -c "source /opt/ros/jazzy/setup.bash && source $(ROS2_WS)/install/setup.bash && ros2 launch rl_obstacle_avoidance gz_sim.launch.py "
 
 # Clean build files
 clean:

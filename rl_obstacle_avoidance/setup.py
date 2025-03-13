@@ -43,6 +43,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'pose_subscriber = rl_obstacle_avoidance.pose_subscriber:main',
         ],
     },
 )
