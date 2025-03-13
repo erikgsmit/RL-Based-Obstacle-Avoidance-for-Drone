@@ -98,60 +98,35 @@
             <enableSubTopic>enable</enableSubTopic>
             <comLinkName>X3/base_link</comLinkName>  <!-- Ensure this matches your drone's main body link -->
 
-            <velocityGain>
-                <x>10.0</x>
-                <y>10.0</y>
-                <z>10.0</z>
-            </velocityGain>
-
-            <attitudeGain>
-                <roll>10.0</roll>
-                <pitch>10.0</pitch>
-                <yaw>10.0</yaw>
-            </attitudeGain>
-
-            <angularRateGain>
-                <roll>0.5</roll>
-                <pitch>0.5</pitch>
-                <yaw>0.5</yaw>
-            </angularRateGain>
-
-            <maximumLinearVelocity>
-                <x>1000.0</x>
-                <y>1000.0</y>
-                <z>1000.0</z>
-            </maximumLinearVelocity>
-
-            <maximumAngularVelocity>
-                <roll>10.0</roll>
-                <pitch>10.0</pitch>
-                <yaw>10.0</yaw>
-            </maximumAngularVelocity>
+            <velocityGain>2.7 2.7 2.7</velocityGain>
+            <attitudeGain>2 3 0.15</attitudeGain>
+            <angularRateGain>0.4 0.52 0.18</angularRateGain>
+            <maximumLinearAcceleration>2 2 2</maximumLinearAcceleration>
 
             <rotorConfiguration>
                 <rotor>
                     <jointName>X3/rotor_0_joint</jointName>
-                    <forceConstant>1.0</forceConstant>
-                    <momentConstant>0.1</momentConstant>
+                    <forceConstant>8.54858e-06</forceConstant>
+                    <momentConstant>0.016</momentConstant>
                     <direction>1</direction>
                 </rotor>
                 <rotor>
                     <jointName>X3/rotor_1_joint</jointName>
-                    <forceConstant>1.0</forceConstant>
-                    <momentConstant>0.1</momentConstant>
-                    <direction>-1</direction>
+                    <forceConstant>8.54858e-06</forceConstant>
+                    <momentConstant>0.016</momentConstant>
+                    <direction>1</direction>
                 </rotor>
                 <rotor>
                     <jointName>X3/rotor_2_joint</jointName>
-                    <forceConstant>1.0</forceConstant>
-                    <momentConstant>0.1</momentConstant>
+                    <forceConstant>8.54858e-06</forceConstant>
+                    <momentConstant>0.016</momentConstant>
                     <direction>-1</direction>
                 </rotor>
                 <rotor>
                     <jointName>X3/rotor_3_joint</jointName>
-                    <forceConstant>1.0</forceConstant>
-                    <momentConstant>0.1</momentConstant>
-                    <direction>1</direction>
+                    <forceConstant>8.54858e-06</forceConstant>
+                    <momentConstant>0.016</momentConstant>
+                    <direction>-1</direction>
                 </rotor>
             </rotorConfiguration>
         </plugin> 
