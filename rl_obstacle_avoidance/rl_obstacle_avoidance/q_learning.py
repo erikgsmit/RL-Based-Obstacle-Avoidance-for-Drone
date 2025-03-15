@@ -16,11 +16,10 @@ class QLearningAgent(Node):
     def __init__(self, pose_node: PoseSubscriber, lidar_node: LidarSubscriber):
         super().__init__('q_learning_agent')
 
-        # ✅ Use the existing Pose and Lidar nodes instead of creating new ones
         self.pose_subscriber = pose_node
         self.lidar_subscriber = lidar_node
 
-        # ✅ Initialize drone movement controller
+        # Initialize drone movement controller
         self.mover = DroneMover()
 
         # Define a 3D Q-table: (discretized x, y, z) x (6 possible actions)
@@ -40,7 +39,6 @@ class QLearningAgent(Node):
         self.current_state = (-3, 0, 0)  # Placeholder start position
         self.goal_state = (9, 0, 0)  # Placeholder goal position
 
-        # ✅ Timer to run Q-learning updates (calls `update_q_learning` every 1 second)
         self.create_timer(1.0, self.update_q_learning)
 
         self.get_logger().info("Q-Learning Agent Initialized in 3D!")
@@ -55,12 +53,12 @@ class QLearningAgent(Node):
     def update_q_learning(self):
         """ Q-learning logic: choose action, move, update Q-table. """
 
-        # ✅ Read current drone position
+        # Read current drone position
         current_pose = self.pose_subscriber.get_pose()
         self.get_logger().info(f"Current Pose Read by Q-Learning: {current_pose}")
         current_state = self.get_discrete_state((current_pose[0], current_pose[1], current_pose[2]))
 
-        # ✅ Read LiDAR data for obstacle detection
+        # Read LiDAR data for obstacle detection
         min_distance = self.lidar_subscriber.get_min_distance()
 
         # Assign rewards
@@ -71,7 +69,7 @@ class QLearningAgent(Node):
         else:
             reward = -1  # Small penalty to encourage shortest path
 
-        # ✅ Choose action using epsilon-greedy strategy
+        # Choose action using epsilon-greedy strategy
         if np.random.rand() < self.epsilon:
             action_index = np.random.choice(len(self.actions))  # Explore
         else:
@@ -79,14 +77,14 @@ class QLearningAgent(Node):
 
         action = self.actions[action_index]
 
-        # ✅ Move the drone
+        # Move the drone
         self.mover.move(action)
 
-        # ✅ Get new state after movement
+        # Get new state after movement
         new_pose = self.pose_subscriber.get_pose()
         new_state = self.get_discrete_state((new_pose[0], new_pose[1], new_pose[2]))
 
-        # ✅ Update Q-table
+        # Update Q-table
         old_q_value = self.q_table[current_state][action_index]
         future_max = np.max(self.q_table[new_state])
 
@@ -95,37 +93,36 @@ class QLearningAgent(Node):
 
         self.q_table[current_state][action_index] = new_q_value
 
-        # ✅ Update state
         self.current_state = new_state
 
-        # ✅ Reduce exploration over time
+        # Reduce exploration over time
         self.epsilon *= 0.99
 
-        # ✅ Logging
+        # Logging
         self.get_logger().info(f"State: {self.current_state}, Action: {action}, Reward: {reward}")
 
-        # ✅ Check if goal is reached
+        # Check if goal is reached
         if self.current_state == self.goal_state:
             self.get_logger().info("Goal reached!")
 
 def main(args=None):
     rclpy.init(args=args)
 
-    # ✅ Create Pose and Lidar subscriber nodes
+    # Create Pose and Lidar subscriber nodes
     pose_subscriber_node = PoseSubscriber()
     lidar_subscriber_node = LidarSubscriber()
 
-    # ✅ Create Q-Learning Agent node
+    # Create Q-Learning Agent node
     q_learning_node = QLearningAgent(pose_subscriber_node, lidar_subscriber_node)
 
-    # ✅ Use a MultiThreadedExecutor to spin all nodes in parallel
+    # Use a MultiThreadedExecutor to spin all nodes in parallel
     executor = MultiThreadedExecutor()
     executor.add_node(pose_subscriber_node)
     executor.add_node(lidar_subscriber_node)
     executor.add_node(q_learning_node)
 
     try:
-        executor.spin()  # ✅ Run all nodes concurrently
+        executor.spin()  # Run all nodes concurrently
     except KeyboardInterrupt:
         pass
     finally:
