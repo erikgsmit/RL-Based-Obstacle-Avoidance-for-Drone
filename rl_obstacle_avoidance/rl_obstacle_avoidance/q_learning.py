@@ -45,10 +45,25 @@ class QLearningAgent(Node):
 
     def get_discrete_state(self, position):
         """ Convert continuous position (x, y, z) to discrete grid state. """
-        x, y, z = int(position[0]), int(position[1]), int(position[2])
-        discrete_state = (max(0, min(x, 19)), max(0, min(y, 19)), max(0, min(z, 19)))
+
+        # Define the known bounds of your world (adjust as needed)
+        min_bounds = (-20, -20, 0)  # Minimum world coordinates
+        max_bounds = (20, 20, 10)   # Maximum world coordinates
+
+        # Convert position to a discrete grid index
+        grid_size = (self.state_space_size[0] - 1, 
+                    self.state_space_size[1] - 1, 
+                    self.state_space_size[2] - 1)
+
+        x = int((position[0] - min_bounds[0]) / (max_bounds[0] - min_bounds[0]) * grid_size[0])
+        y = int((position[1] - min_bounds[1]) / (max_bounds[1] - min_bounds[1]) * grid_size[1])
+        z = int((position[2] - min_bounds[2]) / (max_bounds[2] - min_bounds[2]) * grid_size[2])
+
+        discrete_state = (x, y, z)
+
         self.get_logger().info(f"Discrete State: {discrete_state} from Position: {position}")
         return discrete_state
+
 
     def update_q_learning(self):
         """ Q-learning logic: choose action, move, update Q-table. """
