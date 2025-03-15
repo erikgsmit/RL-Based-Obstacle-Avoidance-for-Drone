@@ -23,6 +23,6 @@ clean:
 	rm -rf build/ install/ log/
 
 # Complete rebuild (clean + build + run)
-all: clean build run
+all: clean build source run
 
 .PHONY: build source run clean all

@@ -4,14 +4,15 @@ from tf2_msgs.msg import TFMessage
 from geometry_msgs.msg import TransformStamped
 
 class PoseSubscriber(Node):
-    def __init__(self):
-        super().__init__('pose_subscriber')
+    def __init__(self, name='pose_subscriber'):
+        super().__init__(name)
         self.subscription = self.create_subscription(
             TFMessage,
             "/world/drone_world/dynamic_pose/info",  
             self.pose_callback,
             10)
         self.subscription  # Prevent unused variable warning
+        self.current_pose = (-3, 0, 0)  # start position
 
     def pose_callback(self, msg):
         
@@ -20,20 +21,8 @@ class PoseSubscriber(Node):
             x = transform.transform.translation.x
             y = transform.transform.translation.y
             z = transform.transform.translation.z
-            # print(f"Drone Position: x={x}, y={y}, z={z} \n")  # debug
-            self.get_logger().info(f"Drone Position: x={x}, y={y}, z={z}") # log info
+            self.current_pose = (x, y, z)  # Update current position
             
-
-def main(args=None):
-    rclpy.init(args=args)
-    node = PoseSubscriber()
-    try:
-        rclpy.spin(node)
-    except KeyboardInterrupt:
-        pass
-    finally:
-        node.destroy_node()
-        rclpy.shutdown()
-
-if __name__ == "__main__":
-    main()
+    def get_pose(self):
+        """ Returns the current drone position. """
+        return self.current_pose
