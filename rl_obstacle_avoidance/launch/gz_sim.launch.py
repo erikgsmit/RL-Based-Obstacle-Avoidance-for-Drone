@@ -44,4 +44,11 @@ def generate_launch_description():
             name='pose_subscriber',
             output='screen',
         ),
+        
+        Node(
+            package='rl_obstacle_avoidance',
+            executable='lidar_subscriber',
+            name='lidar_subscriber',
+            output='screen',
+        ),
     ])

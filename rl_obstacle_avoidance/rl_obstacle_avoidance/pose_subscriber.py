@@ -20,8 +20,8 @@ class PoseSubscriber(Node):
             x = transform.transform.translation.x
             y = transform.transform.translation.y
             z = transform.transform.translation.z
-            print(f"Drone Position: x={x}, y={y}, z={z} \n")  # debug
-            self.get_logger().info(f"Drone Position: x={x}, y={y}, z={z}")
+            # print(f"Drone Position: x={x}, y={y}, z={z} \n")  # debug
+            self.get_logger().info(f"Drone Position: x={x}, y={y}, z={z}") # log info
             
 
 def main(args=None):
