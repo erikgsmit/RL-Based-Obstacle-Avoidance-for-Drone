@@ -1,6 +1,5 @@
 import sys
 import time
-import pandas as pd
 import os
 import subprocess
 import numpy as np
@@ -65,13 +64,15 @@ class QLearningAgent(Node):
             self.get_logger().info("No saved Q-table found. Initializing a new one.")
 
         # DEBUG: Check if Q-table actually loaded
-        # self.get_logger().info(f"Loaded Q-table:\n {self.q_table}")
+        self.get_logger().info(f"Loaded Q-table:\n {self.q_table}")
 
-  
+
+        
+        
     def save_q_table(self):
         """ Save Q-table to file after each episode. """
-        df = pd.DataFrame(self.q_table.reshape(-1, self.q_table.shape[-1]))
-        df.to_csv("q_table.csv", index=False)
+        np.save(self.q_table_file, self.q_table)
+        self.get_logger().info(f"Q-table saved to file. Current Q-table:\n {self.q_table}")
 
 
     def start_new_episode(self):
