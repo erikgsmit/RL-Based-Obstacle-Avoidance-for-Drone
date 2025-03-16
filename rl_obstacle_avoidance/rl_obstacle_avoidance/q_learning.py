@@ -1,12 +1,12 @@
 import sys
+import time
+import pandas as pd
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-
-import rclpy
+import subprocess
 import numpy as np
+import rclpy
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
-from threading import Thread
 
 from rl_obstacle_avoidance.drone_mover import DroneMover
 from rl_obstacle_avoidance.pose_subscriber import PoseSubscriber
@@ -18,130 +18,204 @@ class QLearningAgent(Node):
 
         self.pose_subscriber = pose_node
         self.lidar_subscriber = lidar_node
-
-        # Initialize drone movement controller
         self.mover = DroneMover()
 
-        # Define a 3D Q-table: (discretized x, y, z) x (6 possible actions)
-        self.state_space_size = (20, 20, 20)
+        # Q-learning settings
+        self.state_space_size = (20, 20, 20)  # Discretized 3D grid
         self.action_space_size = 6  # Six movement directions
-        self.q_table = np.zeros(self.state_space_size + (self.action_space_size,))
+        self.q_table_file = "q_table.npy"  # File to save/load Q-table
 
-        self.learning_rate = 0.1
-        self.discount_factor = 0.9
-        self.epsilon = 1.0  # Exploration factor
+        self.learning_rate = 0.5   # Increase learning speed
+        self.discount_factor = 0.8  # Reduce future reward dependence slightly
+        self.epsilon = 0.9         # Reduce randomness gradually    
+
 
         self.actions = [(2.0, 0.0, 0.0), (-2.0, 0.0, 0.0),
                         (0.0, 2.0, 0.0), (0.0, -2.0, 0.0),
-                        (0.0, 2.0, 1.0), (0.0, 0.0, -2.0)]
+                        (0.0, 0.0, 2.0), (0.0, 0.0, -2.0)]
 
-        # Define start and goal positions in 3D
+        # Environment and episodic learning settings
+        self.min_bounds = (-20, -20, 0)  
+        self.max_bounds = (20, 20, 10)  
+        self.max_steps = 25  # Maximum steps per episode
+        self.episode_count = 0  
+        self.episode_reward = 0
+        self.episode_steps = 0
+        
         self.current_state = (-3, 0, 0)  # Placeholder start position
         self.goal_state = (9, 0, 0)  # Placeholder goal position
 
+
+        # Load Q-table if it exists, otherwise initialize a new one
+        self.load_q_table()
+
+
+        # Timer to update Q-learning process
         self.create_timer(1.0, self.update_q_learning)
 
-        self.get_logger().info("Q-Learning Agent Initialized in 3D!")
+        self.get_logger().info("Q-Learning Agent Initialized with Episodic Learning!")
+
+    def load_q_table(self):
+        """ Load Q-table from file if available, otherwise initialize a new one. """
+        if os.path.exists(self.q_table_file):
+            self.q_table = np.load(self.q_table_file)
+            self.get_logger().info("Q-table loaded from file.")
+        else:
+            self.q_table = np.zeros(self.state_space_size + (self.action_space_size,))
+            self.get_logger().info("No saved Q-table found. Initializing a new one.")
+
+        # DEBUG: Check if Q-table actually loaded
+        # self.get_logger().info(f"Loaded Q-table:\n {self.q_table}")
+
+  
+    def save_q_table(self):
+        """ Save Q-table to file after each episode. """
+        df = pd.DataFrame(self.q_table.reshape(-1, self.q_table.shape[-1]))
+        df.to_csv("q_table.csv", index=False)
+
+
+    def start_new_episode(self):
+        """ Resets the Gazebo simulation and initializes a new episode. """
+        self.get_logger().info(f"Resetting simulation for Episode {self.episode_count + 1}")
+        # Save Q-table before starting a new episode
+        self.save_q_table()
+
+        # Reset Gazebo simulation
+        reset_command = [
+            "gz", "service", "-s", "/world/drone_world/control",
+            "--reqtype", "gz.msgs.WorldControl",
+            "--reptype", "gz.msgs.Boolean",
+            "--timeout", "3000",
+            "--req", "reset: {all: true}"
+        ]
+
+        try:
+            subprocess.run(reset_command, check=True)
+            self.get_logger().info("Gazebo simulation reset successfully.")
+        except subprocess.CalledProcessError as e:
+            self.get_logger().error(f"Failed to reset Gazebo: {e}")
+
+        
+
+        # Reset episode parameters
+        self.current_state = (-3, 0, 0)  
+        self.goal_state = (9, 0, 0)  
+        self.episode_steps = 0
+        self.episode_reward = 0
+        self.episode_count += 1
+        
+        time.sleep(5)  # Wait for Gazebo to reset
+        
+        # DEBUG: Check LiDAR distance after reset
+        min_distance = self.lidar_subscriber.get_min_distance()
+        self.get_logger().info(f"🚨 LiDAR Check After Reset: {min_distance}m")
+        self.get_logger().info(f"Q-table shape: {self.q_table.shape}")
+
+        self.get_logger().info(f"Episode {self.episode_count} started.")
+        
+        
 
     def get_discrete_state(self, position):
-        """ Convert continuous position (x, y, z) to discrete grid state. """
+        """ Convert continuous position (x, y, z) to a discrete grid state using normalization. """
+        norm_x = (position[0] - self.min_bounds[0]) / (self.max_bounds[0] - self.min_bounds[0])
+        norm_y = (position[1] - self.min_bounds[1]) / (self.max_bounds[1] - self.min_bounds[1])
+        norm_z = (position[2] - self.min_bounds[2]) / (self.max_bounds[2] - self.min_bounds[2])
 
-        # Define the known bounds of your world (adjust as needed)
-        min_bounds = (-20, -20, 0)  # Minimum world coordinates
-        max_bounds = (20, 20, 10)   # Maximum world coordinates
+        # self.get_logger().info(f"Normalized Position: ({norm_x}, {norm_y}, {norm_z}),  Position: {position}")
+        return (
+            max(0, min(int(norm_x * (self.state_space_size[0] - 1)), self.state_space_size[0] - 1)),
+            max(0, min(int(norm_y * (self.state_space_size[1] - 1)), self.state_space_size[1] - 1)),
+            max(0, min(int(norm_z * (self.state_space_size[2] - 1)), self.state_space_size[2] - 1))
+        )
 
-        # Convert position to a discrete grid index
-        grid_size = (self.state_space_size[0] - 1, 
-                    self.state_space_size[1] - 1, 
-                    self.state_space_size[2] - 1)
+    def compute_reward(self, old_position, new_position, goal_position, collision=False):
+        """ Reward function: encourages moving toward goal and penalizes collisions. """
+        old_distance = np.linalg.norm(np.array(goal_position) - np.array(old_position))
+        new_distance = np.linalg.norm(np.array(goal_position) - np.array(new_position))
 
-        x = int((position[0] - min_bounds[0]) / (max_bounds[0] - min_bounds[0]) * grid_size[0])
-        y = int((position[1] - min_bounds[1]) / (max_bounds[1] - min_bounds[1]) * grid_size[1])
-        z = int((position[2] - min_bounds[2]) / (max_bounds[2] - min_bounds[2]) * grid_size[2])
+        # Encourage moving toward the goal
+        if new_distance < old_distance:
+            reward = 10  # More reward for getting closer
+        else:
+            reward = -10  # More penalty for moving away
 
-        discrete_state = (x, y, z)
+        # Small penalty per step to encourage efficiency
+        reward -= 1  
 
-        self.get_logger().info(f"Discrete State: {discrete_state} from Position: {position}")
-        return discrete_state
+        # Heavy penalty for collisions
+        if collision:
+            reward -= 100  # Stronger penalty for crashing
 
+        # Big reward for reaching the goal
+        if new_distance < 0.5:
+            reward += 200  
+
+        self.get_logger().info(f"Episode: #{self.episode_count}. Reward: {reward}, Old Distance: {old_distance}, New Distance: {new_distance}, Collision: {collision}")
+        return reward
 
     def update_q_learning(self):
-        """ Q-learning logic: choose action, move, update Q-table. """
-
-        # Read current drone position
+        """ Q-learning logic: choose action, move, update Q-table, and handle episode termination. """
         current_pose = self.pose_subscriber.get_pose()
-        self.get_logger().info(f"Current Pose Read by Q-Learning: {current_pose}")
         current_state = self.get_discrete_state((current_pose[0], current_pose[1], current_pose[2]))
 
-        # Read LiDAR data for obstacle detection
+        # Check for collision using LiDAR
         min_distance = self.lidar_subscriber.get_min_distance()
+        collision = min_distance < 0.5
 
-        # Assign rewards
-        if min_distance < 0.5:  # Obstacle detected
-            reward = -10  # Penalty for collision
-        elif current_state == self.goal_state:
-            reward = 100  # Reward for reaching goal
-        else:
-            reward = -1  # Small penalty to encourage shortest path
-
-        # Choose action using epsilon-greedy strategy
         if np.random.rand() < self.epsilon:
-            action_index = np.random.choice(len(self.actions))  # Explore
+            action_index = np.random.choice(len(self.actions))  
         else:
-            action_index = np.argmax(self.q_table[current_state])  # Exploit
+            action_index = np.argmax(self.q_table[current_state])  
 
         action = self.actions[action_index]
-
-        # Move the drone
         self.mover.move(action)
+        
+        time.sleep(0.5)  # Wait for the drone to move
 
-        # Get new state after movement
         new_pose = self.pose_subscriber.get_pose()
         new_state = self.get_discrete_state((new_pose[0], new_pose[1], new_pose[2]))
 
-        # Update Q-table
+        reward = self.compute_reward(current_pose, new_pose, self.goal_state, collision)
+        self.episode_reward += reward
+
+        # Update Q-table using Bellman equation
         old_q_value = self.q_table[current_state][action_index]
         future_max = np.max(self.q_table[new_state])
 
         new_q_value = (1 - self.learning_rate) * old_q_value + \
                       self.learning_rate * (reward + self.discount_factor * future_max)
 
+        self.get_logger().info(f"Updating Q-table at {current_state}, action {action_index}, old Q: {old_q_value}")
+
         self.q_table[current_state][action_index] = new_q_value
-
+        
+        self.get_logger().info(f"Inserted: {self.q_table[current_state][action_index]} at {current_state}, action {action_index}")
         self.current_state = new_state
+        self.episode_steps += 1
 
-        # Reduce exploration over time
         self.epsilon *= 0.99
 
-        # Logging
-        self.get_logger().info(f"State: {self.current_state}, Action: {action}, Reward: {reward}")
-
-        # Check if goal is reached
-        if self.current_state == self.goal_state:
-            self.get_logger().info("Goal reached!")
-
+        # Check if episode ended
+        if new_state == self.goal_state or collision or self.episode_steps >= self.max_steps:
+            self.get_logger().info(f"Episode {self.episode_count} ended (Goal: {new_state == self.goal_state}, Collision: {collision}, Steps: {self.episode_steps}, Reward: {self.episode_reward})")
+            self.start_new_episode()
+            
 def main(args=None):
     rclpy.init(args=args)
-
-    # Create Pose and Lidar subscriber nodes
     pose_subscriber_node = PoseSubscriber()
     lidar_subscriber_node = LidarSubscriber()
-
-    # Create Q-Learning Agent node
     q_learning_node = QLearningAgent(pose_subscriber_node, lidar_subscriber_node)
 
-    # Use a MultiThreadedExecutor to spin all nodes in parallel
     executor = MultiThreadedExecutor()
     executor.add_node(pose_subscriber_node)
     executor.add_node(lidar_subscriber_node)
     executor.add_node(q_learning_node)
 
     try:
-        executor.spin()  # Run all nodes concurrently
+        executor.spin()
     except KeyboardInterrupt:
         pass
     finally:
-        # Cleanup nodes
         pose_subscriber_node.destroy_node()
         lidar_subscriber_node.destroy_node()
         q_learning_node.destroy_node()
