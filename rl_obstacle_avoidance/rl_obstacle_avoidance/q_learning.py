@@ -3,6 +3,7 @@ import time
 import os
 import subprocess
 import numpy as np
+import json
 import rclpy
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
@@ -12,7 +13,7 @@ from rl_obstacle_avoidance.pose_subscriber import PoseSubscriber
 from rl_obstacle_avoidance.lidar_subscriber import LidarSubscriber
 
 class QLearningAgent(Node):
-    def __init__(self, pose_node: PoseSubscriber, lidar_node: LidarSubscriber):
+    def __init__(self, pose_node: PoseSubscriber, lidar_node: LidarSubscriber, learning_rate:float, discount_factor:float, epsilon:float):
         super().__init__('q_learning_agent')
 
         self.pose_subscriber = pose_node
@@ -24,9 +25,13 @@ class QLearningAgent(Node):
         self.action_space_size = 6  # Six movement directions
         self.q_table_file = "q_table.npy"  # File to save/load Q-table
 
-        self.learning_rate = 0.5   # Increase learning speed
-        self.discount_factor = 0.8  # Reduce future reward dependence slightly
-        self.epsilon = 0.9         # Reduce randomness gradually    
+
+        filename = f"q_table_lr{learning_rate}_df{discount_factor}"
+        self.learning_rate= learning_rate
+        self.discount_factor = discount_factor
+        self.epsilon = epsilon
+        
+        
 
 
         self.actions = [(1.5, 0.0, 0.0), (-1.5, 0.0, 0.0),
@@ -46,7 +51,7 @@ class QLearningAgent(Node):
 
 
         # Load Q-table if it exists, otherwise initialize a new one
-        self.load_q_table()
+        self.load_q_table(filename=filename)
 
 
         # Timer to update Q-learning process
@@ -54,25 +59,55 @@ class QLearningAgent(Node):
 
         self.get_logger().info("Q-Learning Agent Initialized with Episodic Learning!")
 
-    def load_q_table(self):
-        """ Load Q-table from file if available, otherwise initialize a new one. """
-        if os.path.exists(self.q_table_file):
-            self.q_table = np.load(self.q_table_file)
-            self.get_logger().info("Q-table loaded from file.")
+    def load_q_table(self, filename):
+        """ Load Q-table and hyperparameters using hyperparameter-based filename. """
+        folder = "rl_obstacle_avoidance/q_models/"
+        filename_prefix = f"{folder}{filename}"
+
+        q_table_file = f"{filename_prefix}.npy"
+        hyperparams_file = f"{filename_prefix}.json"
+
+        if os.path.exists(q_table_file):
+            self.q_table = np.load(q_table_file)
+            self.get_logger().info(f"Q-table loaded from {q_table_file}.")
         else:
             self.q_table = np.zeros(self.state_space_size + (self.action_space_size,))
             self.get_logger().info("No saved Q-table found. Initializing a new one.")
 
-        # DEBUG: Check if Q-table actually loaded
-        self.get_logger().info(f"Loaded Q-table:\n {self.q_table}")
+        if os.path.exists(hyperparams_file):
+            with open(hyperparams_file, "r") as f:
+                hyperparams = json.load(f)
+                self.learning_rate = hyperparams["learning_rate"]
+                self.discount_factor = hyperparams["discount_factor"]
+                self.epsilon = hyperparams["epsilon"]
+                self.state_space_size = tuple(hyperparams["state_space_size"])
+                self.action_space_size = hyperparams["action_space_size"]
 
-
+            self.get_logger().info(f"Hyperparameters loaded from {hyperparams_file}.")
+        else:
+            self.get_logger().info("No hyperparameter file found. Using default values.")
         
         
     def save_q_table(self):
-        """ Save Q-table to file after each episode. """
-        np.save(self.q_table_file, self.q_table)
-        # self.get_logger().info(f"Q-table saved to file. Current Q-table:\n {self.q_table}")
+        """ Save Q-table and hyperparameters with a unique filename based on hyperparameters. """
+        folder = "rl_obstacle_avoidance/q_models/"
+        filename_prefix = f"{folder}q_table_lr{self.learning_rate}_df{self.discount_factor}"
+
+        np.save(f"{filename_prefix}.npy", self.q_table)
+
+        # Save hyperparameters
+        hyperparams = {
+            "learning_rate": self.learning_rate,
+            "discount_factor": self.discount_factor,
+            "epsilon": self.epsilon,
+            "state_space_size": self.state_space_size,
+            "action_space_size": self.action_space_size
+    }
+
+        with open(f"{filename_prefix}.json", "w") as f:
+            json.dump(hyperparams, f, indent=4)
+
+        self.get_logger().info(f"Q-table and hyperparameters saved as {filename_prefix}.npy and {filename_prefix}.json")
 
 
     def start_new_episode(self):
@@ -196,9 +231,15 @@ class QLearningAgent(Node):
             
 def main(args=None):
     rclpy.init(args=args)
+
+    learning_rate = 0.5   # Increase learning speed
+    discount_factor = 0.8  # Reduce future reward dependence slightly
+    epsilon = 0.9         # Reduce randomness gradually    
+
+
     pose_subscriber_node = PoseSubscriber()
     lidar_subscriber_node = LidarSubscriber()
-    q_learning_node = QLearningAgent(pose_subscriber_node, lidar_subscriber_node)
+    q_learning_node = QLearningAgent(pose_subscriber_node, lidar_subscriber_node, learning_rate, discount_factor, epsilon)
 
     executor = MultiThreadedExecutor()
     executor.add_node(pose_subscriber_node)
