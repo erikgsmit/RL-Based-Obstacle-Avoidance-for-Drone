@@ -29,9 +29,9 @@ class QLearningAgent(Node):
         self.epsilon = 0.9         # Reduce randomness gradually    
 
 
-        self.actions = [(2.0, 0.0, 0.0), (-2.0, 0.0, 0.0),
-                        (0.0, 2.0, 0.0), (0.0, -2.0, 0.0),
-                        (0.0, 0.0, 2.0), (0.0, 0.0, -2.0)]
+        self.actions = [(1.5, 0.0, 0.0), (-1.5, 0.0, 0.0),
+                        (0.0, 1.5, 0.0), (0.0, -1.5, 0.0),
+                        (0.0, 0.0, 1.5), (0.0, 0.0, -1.5)]
 
         # Environment and episodic learning settings
         self.min_bounds = (-20, -20, 0)  
@@ -72,7 +72,7 @@ class QLearningAgent(Node):
     def save_q_table(self):
         """ Save Q-table to file after each episode. """
         np.save(self.q_table_file, self.q_table)
-        self.get_logger().info(f"Q-table saved to file. Current Q-table:\n {self.q_table}")
+        # self.get_logger().info(f"Q-table saved to file. Current Q-table:\n {self.q_table}")
 
 
     def start_new_episode(self):
@@ -107,27 +107,22 @@ class QLearningAgent(Node):
         
         time.sleep(5)  # Wait for Gazebo to reset
         
-        # DEBUG: Check LiDAR distance after reset
-        min_distance = self.lidar_subscriber.get_min_distance()
-        self.get_logger().info(f"🚨 LiDAR Check After Reset: {min_distance}m")
-        self.get_logger().info(f"Q-table shape: {self.q_table.shape}")
-
+        # self.get_logger().info(f"Q-table shape: {self.q_table.shape}")
         self.get_logger().info(f"Episode {self.episode_count} started.")
         
         
 
     def get_discrete_state(self, position):
-        """ Convert continuous position (x, y, z) to a discrete grid state using normalization. """
-        norm_x = (position[0] - self.min_bounds[0]) / (self.max_bounds[0] - self.min_bounds[0])
-        norm_y = (position[1] - self.min_bounds[1]) / (self.max_bounds[1] - self.min_bounds[1])
-        norm_z = (position[2] - self.min_bounds[2]) / (self.max_bounds[2] - self.min_bounds[2])
+        rounded_x = round(position[0])
+        rounded_y = round(position[1])
+        rounded_z = round(position[2])
 
-        # self.get_logger().info(f"Normalized Position: ({norm_x}, {norm_y}, {norm_z}),  Position: {position}")
-        return (
-            max(0, min(int(norm_x * (self.state_space_size[0] - 1)), self.state_space_size[0] - 1)),
-            max(0, min(int(norm_y * (self.state_space_size[1] - 1)), self.state_space_size[1] - 1)),
-            max(0, min(int(norm_z * (self.state_space_size[2] - 1)), self.state_space_size[2] - 1))
-        )
+        # Clamp values to stay within the Q-table index range
+        clamped_x = max(0, min(rounded_x, self.state_space_size[0] - 1))
+        clamped_y = max(0, min(rounded_y, self.state_space_size[1] - 1))
+        clamped_z = max(0, min(rounded_z, self.state_space_size[2] - 1))
+
+        return (clamped_x, clamped_y, clamped_z)
 
     def compute_reward(self, old_position, new_position, goal_position, collision=False):
         """ Reward function: encourages moving toward goal and penalizes collisions. """
@@ -145,7 +140,7 @@ class QLearningAgent(Node):
 
         # Heavy penalty for collisions
         if collision:
-            reward -= 100  # Stronger penalty for crashing
+            reward -= 200  # Stronger penalty for crashing
 
         # Big reward for reaching the goal
         if new_distance < 0.5:
@@ -183,18 +178,16 @@ class QLearningAgent(Node):
         old_q_value = self.q_table[current_state][action_index]
         future_max = np.max(self.q_table[new_state])
 
-        new_q_value = (1 - self.learning_rate) * old_q_value + \
-                      self.learning_rate * (reward + self.discount_factor * future_max)
+        self.q_table[current_state][action_index] += self.learning_rate * (
+            reward + self.discount_factor * future_max - self.q_table[current_state][action_index]
+        )
 
         self.get_logger().info(f"Updating Q-table at {current_state}, action {action_index}, old Q: {old_q_value}")
-
-        self.q_table[current_state][action_index] = new_q_value
         
-        self.get_logger().info(f"Inserted: {self.q_table[current_state][action_index]} at {current_state}, action {action_index}")
         self.current_state = new_state
         self.episode_steps += 1
 
-        self.epsilon *= 0.99
+        self.epsilon *= 0.99 # Reduce exploration factor over time
 
         # Check if episode ended
         if new_state == self.goal_state or collision or self.episode_steps >= self.max_steps:
