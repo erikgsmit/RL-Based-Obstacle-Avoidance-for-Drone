@@ -5,12 +5,14 @@ import subprocess
 import numpy as np
 import json
 import rclpy
+import matplotlib.pyplot as plt
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 
 from rl_obstacle_avoidance.drone_mover import DroneMover
 from rl_obstacle_avoidance.pose_subscriber import PoseSubscriber
 from rl_obstacle_avoidance.lidar_subscriber import LidarSubscriber
+
 
 class QLearningAgent(Node):
     def __init__(self, pose_node: PoseSubscriber, lidar_node: LidarSubscriber, learning_rate:float, discount_factor:float, epsilon:float):
@@ -23,15 +25,11 @@ class QLearningAgent(Node):
         # Q-learning settings
         self.state_space_size = (20, 20, 20)  # Discretized 3D grid
         self.action_space_size = 6  # Six movement directions
-        self.q_table_file = "q_table.npy"  # File to save/load Q-table
-
 
         filename = f"q_table_lr{learning_rate}_df{discount_factor}"
         self.learning_rate= learning_rate
         self.discount_factor = discount_factor
         self.epsilon = epsilon
-        
-        
 
 
         self.actions = [(1.5, 0.0, 0.0), (-1.5, 0.0, 0.0),
@@ -116,6 +114,10 @@ class QLearningAgent(Node):
         # Save Q-table before starting a new episode
         self.save_q_table()
 
+        # Save/reset episodic rewards
+        episode_data.append(self.episode_reward)
+        self.episode_reward = 0
+
         # Reset Gazebo simulation
         reset_command = [
             "gz", "service", "-s", "/world/drone_world/control",
@@ -124,6 +126,7 @@ class QLearningAgent(Node):
             "--timeout", "3000",
             "--req", "reset: {all: true}"
         ]
+        
 
         try:
             subprocess.run(reset_command, check=True)
@@ -144,8 +147,7 @@ class QLearningAgent(Node):
         
         # self.get_logger().info(f"Q-table shape: {self.q_table.shape}")
         self.get_logger().info(f"Episode {self.episode_count} started.")
-        
-        
+    
 
     def get_discrete_state(self, position):
         rounded_x = round(position[0])
@@ -181,6 +183,7 @@ class QLearningAgent(Node):
         if new_distance < 0.5:
             reward += 200  
 
+        self.episode_reward += reward # Increment episode reward
         self.get_logger().info(f"Episode: #{self.episode_count}. Reward: {reward}, Old Distance: {old_distance}, New Distance: {new_distance}, Collision: {collision}")
         return reward
 
@@ -222,20 +225,57 @@ class QLearningAgent(Node):
         self.current_state = new_state
         self.episode_steps += 1
 
-        self.epsilon *= 0.99 # Reduce exploration factor over time
+        self.epsilon *= 0.9999 # Reduce exploration factor over time
 
         # Check if episode ended
         if new_state == self.goal_state or collision or self.episode_steps >= self.max_steps:
             self.get_logger().info(f"Episode {self.episode_count} ended (Goal: {new_state == self.goal_state}, Collision: {collision}, Steps: {self.episode_steps}, Reward: {self.episode_reward})")
             self.start_new_episode()
-            
+    
+    def get_rewards():
+        return self.rewards
+
+    def get_filename_episode_reward():
+        return self.filename_episode_reward
+
+def save_data(data, file="rl_obstacle_avoidance/data/episode_data"):
+    with open(file, "w") as f:
+        json.dump(data, f, indent=4)   
+
+def load_existing_data(file="rl_obstacle_avoidance/data/episode_data") -> list[int]:
+    try:
+        with open(file, "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return [] 
+
+episode_data = load_existing_data()
+
+def plot_rewards(save_path = "rl_obstacle_avoidance/data/episode_data.png"):
+        """
+        Plots episode rewards over time.
+        Parameters: episode_data (list): each index is an episode number, value is the reward
+        """
+        episodes = list(range(len(episode_data)))
+        rewards = episode_data
+
+        plt.figure(figsize=(10, 5))
+        plt.plot(episodes, rewards, label="Episode Reward")
+        plt.xlabel("Episode")
+        plt.ylabel("Reward")
+        plt.title("Q-learning Agent Performance Over Time")
+        plt.grid(True)
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(save_path)
+        plt.show()
+
 def main(args=None):
     rclpy.init(args=args)
 
     learning_rate = 0.5   # Increase learning speed
     discount_factor = 0.8  # Reduce future reward dependence slightly
-    epsilon = 0.9         # Reduce randomness gradually    
-
+    epsilon = 0.9         # Reduce randomness gradually   
 
     pose_subscriber_node = PoseSubscriber()
     lidar_subscriber_node = LidarSubscriber()
@@ -249,6 +289,8 @@ def main(args=None):
     try:
         executor.spin()
     except KeyboardInterrupt:
+        save_data(data=episode_data)
+        plot_rewards()
         pass
     finally:
         pose_subscriber_node.destroy_node()

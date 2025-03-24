@@ -1,7 +1,7 @@
 {
     "learning_rate": 0.5,
     "discount_factor": 0.8,
-    "epsilon": 0.5283331037437361,
+    "epsilon": 0.026098136567281775,
     "state_space_size": [
         20,
         20,
