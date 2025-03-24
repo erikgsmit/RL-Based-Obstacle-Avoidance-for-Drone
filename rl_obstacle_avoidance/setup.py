@@ -43,8 +43,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'pose_subscriber = rl_obstacle_avoidance.pose_subscriber:main',
-            'lidar_subscriber = rl_obstacle_avoidance.lidar_subscriber:main',
+            'q_learning = rl_obstacle_avoidance.q_learning:main',
         ],
     },
 )
