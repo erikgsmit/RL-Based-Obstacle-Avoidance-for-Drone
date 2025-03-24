@@ -211,7 +211,12 @@ class QLearningAgent(Node):
             reward += 200  
 
         self.episode_reward += reward # Increment episode reward
-        self.get_logger().info(f"Episode: #{self.episode_count}. Reward: {reward}, Old Distance: {old_distance}, New Distance: {new_distance}, Collision: {collision}")
+        
+        # Old printing
+        # self.get_logger().info(f"Episode: #{self.episode_count}. Reward: {reward}, Old Distance: {old_distance}, New Distance: {new_distance}, Collision: {collision}")
+        
+        #New printing
+        self.get_logger().info(f"Episode: #{self.episode_count}. Reward: {reward}. 3D Distance: {new_distance_3D}. 2D Distance: {new_distance}. Collision: {collision}")
         return reward
 
     def update_q_learning(self):
