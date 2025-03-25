@@ -15,46 +15,63 @@ from rl_obstacle_avoidance.lidar_subscriber import LidarSubscriber
 
 
 class QLearningAgent(Node):
-    def __init__(self, pose_node: PoseSubscriber, lidar_node: LidarSubscriber, learning_rate:float, discount_factor:float, epsilon:float):
+    def __init__(self, pose_node: PoseSubscriber, 
+                 lidar_node: LidarSubscriber, 
+                 learning_rate: float, 
+                 discount_factor: float, 
+                 state_space_size=(20, 20, 20), 
+                 action_space_size=6, 
+                 min_bounds=(-20, -20, 0), 
+                 max_bounds=(20, 20, 10), 
+                 start_state=(-3, 0, 0), 
+                 goal_state=(9, 0, 0), 
+                 epsilon_start=1.0, 
+                 epsilon_end=0.1, 
+                 epsilon_decay_episodes=200, 
+                 max_steps=25):
         super().__init__('q_learning_agent')
 
+        # ROS2 nodes
         self.pose_subscriber = pose_node
         self.lidar_subscriber = lidar_node
         self.mover = DroneMover()
 
         # Q-learning settings
-        self.state_space_size = (20, 20, 20)  # Discretized 3D grid
-        self.action_space_size = 6  # Six movement directions
+        self.state_space_size = state_space_size  # 20x20x20 grid
+        self.action_space_size = action_space_size  # 6 actions
 
+        # Hyperparameters
         filename = f"q_table_lr{learning_rate}_df{discount_factor}"
-        self.learning_rate= learning_rate
+        self.learning_rate = learning_rate
         self.discount_factor = discount_factor
-        self.epsilon_start = epsilon
-        self.epsilon_end = 0.1
-        self.epsilon_decay_episodes = 200  # Number of episodes to decay over
+
+        # Epsilon-greedy exploration settings
+        self.epsilon_start = epsilon_start
+        self.epsilon_end = epsilon_end
+        self.epsilon_decay_episodes = epsilon_decay_episodes
         self.epsilon = self.epsilon_start
 
-
+        # Actions: (x, y, z) velocities
         self.actions = [(1.5, 0.0, 0.0), (-1.5, 0.0, 0.0),
                         (0.0, 1.5, 0.0), (0.0, -1.5, 0.0),
                         (0.0, 0.0, 1.5), (0.0, 0.0, -1.5)]
 
         # Environment and episodic learning settings
-        self.min_bounds = (-20, -20, 0)  
-        self.max_bounds = (20, 20, 10)  
-        self.max_steps = 25  # Maximum steps per episode
+        self.min_bounds = min_bounds
+        self.max_bounds = max_bounds 
+        self.max_steps = max_steps  # Maximum steps per episode
+        
+        # Episodic settings
         self.episode_count = 0  
         self.episode_reward = 0
         self.episode_steps = 0
         
-        self.current_state = (-3, 0, 0)  # Placeholder start position
-        self.goal_state = (9, 0, 0)  # Placeholder goal position
+        self.current_state = start_state
+        self.goal_state = goal_state
 
-
-        # Load Q-table if it exists, otherwise initialize a new one
+        # Load Q-table if it exists (resume training), otherwise initialize a new one
         self.load_q_table(filename=filename)
-
-
+        
         # Timer to update Q-learning process
         self.create_timer(1.0, self.update_q_learning)
 
@@ -80,8 +97,8 @@ class QLearningAgent(Node):
                 hyperparams = json.load(f)
                 self.learning_rate = hyperparams["learning_rate"]
                 self.discount_factor = hyperparams["discount_factor"]
-                self.epsilon = hyperparams["epsilon"]
-                self.episode_count = hyperparams["episode_count"]
+                self.epsilon = hyperparams["epsilon"]   # Load epsilon from file (resume training)
+                self.episode_count = hyperparams["episode_count"] # Resume episode count
                 self.state_space_size = tuple(hyperparams["state_space_size"])
                 self.action_space_size = hyperparams["action_space_size"]
 
@@ -280,8 +297,17 @@ def load_existing_data(file="rl_obstacle_avoidance/data/episode_data") -> list[i
             return json.load(f)
     except FileNotFoundError:
         return [] 
+    
+def load_config(file_path="rl_obstacle_avoidance/config/parameters.json"):
+    """ Load configuration parameters from a JSON file. """
+    try:      
+        with open(file_path, "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {}
 
 episode_data = load_existing_data()
+parameters = load_config()
 
 def plot_rewards(save_path = "rl_obstacle_avoidance/data/episode_data.png"):
         """
@@ -290,7 +316,8 @@ def plot_rewards(save_path = "rl_obstacle_avoidance/data/episode_data.png"):
         """
         episodes = list(range(len(episode_data)))
         rewards = episode_data
-
+        
+        # Plot
         plt.figure(figsize=(10, 5))
         plt.plot(episodes, rewards, label="Episode Reward")
         plt.xlabel("Episode")
@@ -305,13 +332,26 @@ def plot_rewards(save_path = "rl_obstacle_avoidance/data/episode_data.png"):
 def main(args=None):
     rclpy.init(args=args)
 
-    learning_rate = 0.3   # Increase learning speed
-    discount_factor = 0.9  # Reduce future reward dependence slightly
-    epsilon = 1 
-
+    # Initialize nodes
     pose_subscriber_node = PoseSubscriber()
     lidar_subscriber_node = LidarSubscriber()
-    q_learning_node = QLearningAgent(pose_subscriber_node, lidar_subscriber_node, learning_rate, discount_factor, epsilon)
+    q_learning_node = QLearningAgent(
+        pose_node=pose_subscriber_node,
+        lidar_node=lidar_subscriber_node,
+        learning_rate=parameters["learning_rate"],
+        discount_factor=parameters["discount_factor"],
+        state_space_size=parameters["state_space_size"],
+        action_space_size=parameters["action_space_size"],
+        min_bounds=parameters["min_bounds"],
+        max_bounds=parameters["max_bounds"],
+        start_state=parameters["start_state"],
+        goal_state=parameters["goal_state"],
+        epsilon_start=parameters["epsilon_start"],
+        epsilon_end=parameters["epsilon_end"],
+        epsilon_decay_episodes=parameters["epsilon_decay_episodes"],
+        max_steps=parameters["max_steps"]
+        
+    )
 
     executor = MultiThreadedExecutor()
     executor.add_node(pose_subscriber_node)
