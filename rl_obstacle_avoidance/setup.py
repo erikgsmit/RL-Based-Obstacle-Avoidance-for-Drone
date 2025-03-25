@@ -45,6 +45,7 @@ setup(
     entry_points={
         'console_scripts': [
             'q_learning = rl_obstacle_avoidance.q_learning:main',
+            'q_learning_test = rl_obstacle_avoidance.q_learning_test:main',
         ],
     },
 )

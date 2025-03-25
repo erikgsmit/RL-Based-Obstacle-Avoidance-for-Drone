@@ -38,10 +38,17 @@ def generate_launch_description():
             config_file=bridge_config,
         ),
         
-         Node(
+        Node(
             package='rl_obstacle_avoidance',
             executable='q_learning',
             name='q_learning_agent',
             output='screen'
         ),
+         
+        #  Node(
+        #     package='rl_obstacle_avoidance',
+        #     executable='q_learning_test',
+        #     name='q_learning_agent_test',
+        #     output='screen'
+        # ),
     ])
