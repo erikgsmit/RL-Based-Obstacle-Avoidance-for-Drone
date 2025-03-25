@@ -1,0 +1,15 @@
+{
+    "learning_rate": 0.3,
+    "discount_factor": 0.9,
+    "epsilon_start": 1.0,
+    "epsilon_end": 0.1,
+    "epsilon_decay_episodes": 200,
+    "max_steps": 25,
+    "state_space_size": [20, 20, 20],
+    "action_space_size": 6,
+    "min_bounds": [-20, -20, 0],
+    "max_bounds": [20, 20, 10],
+    "start_state": [-3, 0, 0],
+    "goal_state": [9, 0, 0]
+  }
+  
