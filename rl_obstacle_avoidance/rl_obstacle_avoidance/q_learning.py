@@ -29,7 +29,10 @@ class QLearningAgent(Node):
         filename = f"q_table_lr{learning_rate}_df{discount_factor}"
         self.learning_rate= learning_rate
         self.discount_factor = discount_factor
-        self.epsilon = epsilon
+        self.epsilon_start = epsilon
+        self.epsilon_end = 0.1
+        self.epsilon_decay_episodes = 200  # Number of episodes to decay over
+        self.epsilon = self.epsilon_start
 
 
         self.actions = [(1.5, 0.0, 0.0), (-1.5, 0.0, 0.0),
@@ -78,6 +81,7 @@ class QLearningAgent(Node):
                 self.learning_rate = hyperparams["learning_rate"]
                 self.discount_factor = hyperparams["discount_factor"]
                 self.epsilon = hyperparams["epsilon"]
+                self.episode_count = hyperparams["episode_count"]
                 self.state_space_size = tuple(hyperparams["state_space_size"])
                 self.action_space_size = hyperparams["action_space_size"]
 
@@ -98,6 +102,7 @@ class QLearningAgent(Node):
             "learning_rate": self.learning_rate,
             "discount_factor": self.discount_factor,
             "epsilon": self.epsilon,
+            "episode_count": self.episode_count,
             "state_space_size": self.state_space_size,
             "action_space_size": self.action_space_size
     }
@@ -117,6 +122,13 @@ class QLearningAgent(Node):
         # Save/reset episodic rewards
         episode_data.append(self.episode_reward)
         self.episode_reward = 0
+
+        # Linear epsilon decay
+        if self.episode_count < self.epsilon_decay_episodes:
+            decay_ratio = self.episode_count / self.epsilon_decay_episodes
+            self.epsilon = self.epsilon_start - decay_ratio * (self.epsilon_start - self.epsilon_end)
+        else:
+            self.epsilon = self.epsilon_end
 
         # Reset Gazebo simulation
         reset_command = [
@@ -143,28 +155,35 @@ class QLearningAgent(Node):
         self.episode_reward = 0
         self.episode_count += 1
         
-        time.sleep(5)  # Wait for Gazebo to reset
+        time.sleep(3)  # Wait for Gazebo to reset
         
         # self.get_logger().info(f"Q-table shape: {self.q_table.shape}")
         self.get_logger().info(f"Episode {self.episode_count} started.")
     
 
     def get_discrete_state(self, position):
+        # self.get_logger().info(f"Rec. Pos {position}")
         rounded_x = round(position[0])
         rounded_y = round(position[1])
         rounded_z = round(position[2])
 
-        # Clamp values to stay within the Q-table index range
-        clamped_x = max(0, min(rounded_x, self.state_space_size[0] - 1))
-        clamped_y = max(0, min(rounded_y, self.state_space_size[1] - 1))
-        clamped_z = max(0, min(rounded_z, self.state_space_size[2] - 1))
+        # self.get_logger().info(f"r_x= {rounded_x}, r_y= {rounded_y}, r_z ={rounded_z}")
 
+        # Clamp values to stay within the Q-table index range
+        clamped_x = max(self.min_bounds[0] - 1, min(rounded_x, self.state_space_size[0] - 1))
+        clamped_y = max(self.min_bounds[1] - 1 , min(rounded_y, self.state_space_size[1] - 1))
+        clamped_z = max(self.min_bounds[2], min(rounded_z, self.state_space_size[2] - 1))
+
+        # self.get_logger().info(f"DISC: x={clamped_x}, y={clamped_y}, z={clamped_z}")
         return (clamped_x, clamped_y, clamped_z)
 
     def compute_reward(self, old_position, new_position, goal_position, collision=False):
         """ Reward function: encourages moving toward goal and penalizes collisions. """
-        old_distance = np.linalg.norm(np.array(goal_position) - np.array(old_position))
-        new_distance = np.linalg.norm(np.array(goal_position) - np.array(new_position))
+        old_distance = np.linalg.norm(np.array(goal_position[:2]) - np.array(old_position[:2]))
+        new_distance = np.linalg.norm(np.array(goal_position[:2]) - np.array(new_position[:2]))
+
+        old_distance_3D = np.linalg.norm(np.array(goal_position) - np.array(old_position))
+        new_distance_3D = np.linalg.norm(np.array(goal_position) - np.array(new_position))
 
         # Encourage moving toward the goal
         if new_distance < old_distance:
@@ -179,12 +198,25 @@ class QLearningAgent(Node):
         if collision:
             reward -= 200  # Stronger penalty for crashing
 
+        
+        # In goal area
+        if new_distance < 3:
+            reward += 100
+
+        #if new_distance_3D < 2
+        #    reward += 50
+
         # Big reward for reaching the goal
-        if new_distance < 0.5:
+        if new_distance_3D < 0.5:
             reward += 200  
 
         self.episode_reward += reward # Increment episode reward
-        self.get_logger().info(f"Episode: #{self.episode_count}. Reward: {reward}, Old Distance: {old_distance}, New Distance: {new_distance}, Collision: {collision}")
+        
+        # Old printing
+        # self.get_logger().info(f"Episode: #{self.episode_count}. Reward: {reward}, Old Distance: {old_distance}, New Distance: {new_distance}, Collision: {collision}")
+        
+        #New printing
+        self.get_logger().info(f"Episode: #{self.episode_count}. Reward: {reward}. 3D Distance: {new_distance_3D}. 2D Distance: {new_distance}. Collision: {collision}")
         return reward
 
     def update_q_learning(self):
@@ -220,12 +252,12 @@ class QLearningAgent(Node):
             reward + self.discount_factor * future_max - self.q_table[current_state][action_index]
         )
 
-        self.get_logger().info(f"Updating Q-table at {current_state}, action {action_index}, old Q: {old_q_value}")
+        # self.get_logger().info(f"Updating Q-table at {current_state}, action {action_index}, old Q: {old_q_value}")
         
         self.current_state = new_state
         self.episode_steps += 1
 
-        self.epsilon *= 0.9999 # Reduce exploration factor over time
+        # self.epsilon *= 0.99 # Reduce exploration factor over time
 
         # Check if episode ended
         if new_state == self.goal_state or collision or self.episode_steps >= self.max_steps:
@@ -273,9 +305,9 @@ def plot_rewards(save_path = "rl_obstacle_avoidance/data/episode_data.png"):
 def main(args=None):
     rclpy.init(args=args)
 
-    learning_rate = 0.5   # Increase learning speed
-    discount_factor = 0.8  # Reduce future reward dependence slightly
-    epsilon = 0.9         # Reduce randomness gradually   
+    learning_rate = 0.3   # Increase learning speed
+    discount_factor = 0.9  # Reduce future reward dependence slightly
+    epsilon = 1 
 
     pose_subscriber_node = PoseSubscriber()
     lidar_subscriber_node = LidarSubscriber()
