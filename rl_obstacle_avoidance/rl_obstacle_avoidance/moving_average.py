@@ -13,7 +13,7 @@ The script reads episode data from a JSON file, computes the moving average,
 and saves the plot as a PNG file.
 """
 
-def plot_moving_average(window_size=3):
+def plot_moving_average(window_size=15):
     data_dir = 'rl_obstacle_avoidance/data'
     data_file = os.path.join(data_dir, 'episode_data')
     output_file = os.path.join(data_dir, 'episode_data_ma.png')
@@ -51,4 +51,4 @@ def plot_moving_average(window_size=3):
     print(f"Plot saved to {output_file}")
 
 if __name__ == "__main__":
-    plot_moving_average(window_size=10)
+    plot_moving_average(window_size=15)
