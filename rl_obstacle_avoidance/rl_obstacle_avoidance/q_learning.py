@@ -89,7 +89,7 @@ class QLearningAgent(Node):
             self.q_table = np.load(q_table_file)
             self.get_logger().info(f"Q-table loaded from {q_table_file}.")
         else:
-            self.q_table = np.zeros(self.state_space_size + (self.action_space_size,))
+            self.q_table = np.zeros(tuple(self.state_space_size) + (self.action_space_size,))
             self.get_logger().info("No saved Q-table found. Initializing a new one.")
 
         if os.path.exists(hyperparams_file):
@@ -102,7 +102,7 @@ class QLearningAgent(Node):
                 self.state_space_size = tuple(hyperparams["state_space_size"])
                 self.action_space_size = hyperparams["action_space_size"]
 
-            self.get_logger().info(f"Hyperparameters loaded from {hyperparams_file}.")
+            self.get_logger().info(f"Hyperparameters loaded from {hyperparams_file}.Q table shape: {self.q_table.shape}")
         else:
             self.get_logger().info("No hyperparameter file found. Using default values.")
         
