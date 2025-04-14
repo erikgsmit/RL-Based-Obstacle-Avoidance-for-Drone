@@ -184,12 +184,15 @@ class QLearningAgent(Node):
         rounded_y = round(position[1])
         rounded_z = round(position[2])
 
-        # self.get_logger().info(f"r_x= {rounded_x}, r_y= {rounded_y}, r_z ={rounded_z}")
+        x_index = int(rounded_x - self.min_bounds[0]) 
+        y_index = int(rounded_y - self.min_bounds[1])
+        z_index = int(rounded_z - self.min_bounds[2])
 
-        # Clamp values to stay within the Q-table index range
-        clamped_x = max(self.min_bounds[0] - 1, min(rounded_x, self.state_space_size[0] - 1))
-        clamped_y = max(self.min_bounds[1] - 1 , min(rounded_y, self.state_space_size[1] - 1))
-        clamped_z = max(self.min_bounds[2], min(rounded_z, self.state_space_size[2] - 1))
+        # self.get_logger().info(f"x={x_index}, y={y_index}, z={z_index}")
+        
+        clamped_x = max(0, min(x_index, self.state_space_size[0] - 1))
+        clamped_y = max(0, min(y_index, self.state_space_size[1] - 1))
+        clamped_z = max(0, min(z_index, self.state_space_size[2] - 1))
 
         # self.get_logger().info(f"DISC: x={clamped_x}, y={clamped_y}, z={clamped_z}")
         return (clamped_x, clamped_y, clamped_z)
