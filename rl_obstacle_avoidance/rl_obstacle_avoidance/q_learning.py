@@ -68,6 +68,12 @@ class QLearningAgent(Node):
         
         self.current_state = start_state
         self.goal_state = goal_state
+        
+        # Initialize collision tracking
+        self.collision_count = 0  # Counts collisions within current 200-episode window
+        self.collision_history = []  # List of collision counts every 200 episodes
+        self.collision_window = 200  # Episodes per tracking window
+
 
         # Load Q-table if it exists (resume training), otherwise initialize a new one
         self.load_q_table(filename=filename)
@@ -101,6 +107,10 @@ class QLearningAgent(Node):
                 self.episode_count = hyperparams["episode_count"] # Resume episode count
                 self.state_space_size = tuple(hyperparams["state_space_size"])
                 self.action_space_size = hyperparams["action_space_size"]
+                self.collision_count = hyperparams.get("collision_count", 0)
+                self.collision_history = hyperparams.get("collision_history", [])
+                self.collision_window = hyperparams.get("collision_window", 200)
+
 
             self.get_logger().info(f"Hyperparameters loaded from {hyperparams_file}.Q table shape: {self.q_table.shape}")
         else:
@@ -121,7 +131,11 @@ class QLearningAgent(Node):
             "epsilon": self.epsilon,
             "episode_count": self.episode_count,
             "state_space_size": self.state_space_size,
-            "action_space_size": self.action_space_size
+            "action_space_size": self.action_space_size,
+            "collision_count": self.collision_count,
+            "collision_history": self.collision_history,
+            "collision_window": self.collision_window
+
     }
 
         with open(f"{filename_prefix}.json", "w") as f:
@@ -146,6 +160,12 @@ class QLearningAgent(Node):
             self.epsilon = self.epsilon_start - decay_ratio * (self.epsilon_start - self.epsilon_end)
         else:
             self.epsilon = self.epsilon_end
+            
+        # Every 200 episodes, save collision count and reset
+        if self.episode_count % self.collision_window == 0:
+            self.collision_history.append(self.collision_count)
+            self.get_logger().info(f"Collision count in last {self.collision_window} episodes: {self.collision_count}")
+            self.collision_count = 0  # Reset for next window
 
         # Reset Gazebo simulation
         reset_command = [
@@ -244,10 +264,7 @@ class QLearningAgent(Node):
         current_pose = self.pose_subscriber.get_pose()
         current_state = self.get_discrete_state((current_pose[0], current_pose[1], current_pose[2]))
 
-        # Check for collision using LiDAR
-        min_distance = self.lidar_subscriber.get_min_distance()
-        collision = min_distance < 0.5
-
+       
         if np.random.rand() < self.epsilon:
             action_index = np.random.choice(len(self.actions))  
         else:
@@ -255,6 +272,15 @@ class QLearningAgent(Node):
 
         action = self.actions[action_index]
         self.mover.move(action)
+        
+         # Check for collision using LiDAR
+        min_distance = self.lidar_subscriber.get_min_distance()
+        collision = min_distance < 0.5
+        
+        # Check if episode ended
+        if collision:
+            self.collision_count += 1
+
         
         time.sleep(0.5)  # Wait for the drone to move
 
@@ -279,7 +305,8 @@ class QLearningAgent(Node):
 
         # self.epsilon *= 0.99 # Reduce exploration factor over time
 
-        # Check if episode ended
+       
+
         if new_state == self.goal_state or collision or self.episode_steps >= self.max_steps:
             self.get_logger().info(f"Episode {self.episode_count} ended (Goal: {new_state == self.goal_state}, Collision: {collision}, Steps: {self.episode_steps}, Reward: {self.episode_reward})")
             self.start_new_episode()
