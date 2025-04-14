@@ -264,6 +264,14 @@ class QLearningAgent(Node):
         current_pose = self.pose_subscriber.get_pose()
         current_state = self.get_discrete_state((current_pose[0], current_pose[1], current_pose[2]))
 
+         # Check for collision using LiDAR
+        min_distance = self.lidar_subscriber.get_min_distance()
+        collision = min_distance < 0.5
+        
+        # Check if episode ended
+        if collision:
+            self.collision_count += 1
+
        
         if np.random.rand() < self.epsilon:
             action_index = np.random.choice(len(self.actions))  
@@ -273,14 +281,7 @@ class QLearningAgent(Node):
         action = self.actions[action_index]
         self.mover.move(action)
         
-         # Check for collision using LiDAR
-        min_distance = self.lidar_subscriber.get_min_distance()
-        collision = min_distance < 0.5
         
-        # Check if episode ended
-        if collision:
-            self.collision_count += 1
-
         
         time.sleep(0.5)  # Wait for the drone to move
 
