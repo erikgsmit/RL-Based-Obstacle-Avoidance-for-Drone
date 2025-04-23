@@ -14,10 +14,10 @@ The script reads episode data from a JSON file, computes the moving average,
 and saves the plot as a PNG file.
 """
 
-def plot_moving_average(filename, window_size=15):
-    base_name = os.path.splitext(filename)[0]
+def plot_moving_average(filename, window_size=100):
+    base_name = filename
     data_dir = 'rl_obstacle_avoidance/data'
-    data_file = os.path.join(data_dir, 'episode_data')
+    data_file = os.path.join(data_dir, filename)
     output_file = os.path.join(data_dir, f'{base_name}_ma.png')
 
     try:
@@ -86,13 +86,52 @@ def plot_collisions(filename):
     plt.close()
     print(f"Collision plot saved to {output_file}")
 
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python plot_script.py <q_table_json_filename>")
-        print("Example: python plot_script.py q_table_lr0.3_df0.6.json")
-        sys.exit(1)
+def plot_collisions_combined():
+    # Filvägar till json-filerna
+    base_path = os.path.join(os.path.dirname(__file__), '..', 'q_models')
+    filenames = [
+        'q_table_lr0.1_df0.6.json',
+        'q_table_lr0.1_df0.9.json',
+        'q_table_lr0.3_df0.6.json',
+        'q_table_lr0.3_df0.9.json'
+    ]
 
-    filename = sys.argv[1]
+    # Färger eller linjestilar för att skilja kurvorna
+    #styles = ['#1abc9c', '#3498db', '#9b59b6', '#34495e']
+    styles = ['#0e7490', '#2563eb', '#7c3aed', '#0f172a']
+
+
     
-    plot_collisions(filename)
-    plot_moving_average(filename, window_size=15)
+    plt.figure(figsize=(10, 6))
+
+    for filename, style in zip(filenames, styles):
+        filepath = os.path.join(base_path, filename)
+        with open(filepath, 'r') as f:
+            data = json.load(f)
+
+        # Ignorera första värdet i collision_history
+        collision_data = data['collision_history'][1:]
+
+        # X-axel: 200 till 2000 med steg om 200 (10 datapunkter)
+        x = list(range(200, 2001, 200))
+
+        # Lägg till label baserat på filnamnet
+        label = filename.replace('q_table_', '').replace('.json', '')
+
+        plt.plot(x, collision_data, style, label=label)
+
+    plt.ylim(25, 175)
+    plt.xlim(200, 2000)
+    plt.xlabel('Episode')
+    plt.ylabel('Collision Count')
+    plt.title('Collision History per Experiment')
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+if __name__ == "__main__":
+
+    plot_moving_average('q_table_lr0.3_df0.9_episode_data', window_size=100)
+    plot_collisions_combined()
+    

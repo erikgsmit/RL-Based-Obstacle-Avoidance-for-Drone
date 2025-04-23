@@ -2,7 +2,7 @@
     "learning_rate": 0.1,
     "discount_factor": 0.6,
     "epsilon": 0.1,
-    "episode_count": 2000,
+    "episode_count": 2001,
     "state_space_size": [
         21,
         21,
@@ -20,7 +20,8 @@
         118,
         79,
         127,
-        130
+        130,
+        97
     ],
     "collision_window": 200
 }
