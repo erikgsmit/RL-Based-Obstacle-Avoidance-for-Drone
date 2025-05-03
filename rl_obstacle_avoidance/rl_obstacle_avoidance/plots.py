@@ -104,6 +104,14 @@ def plot_collisions_combined():
     
     plt.figure(figsize=(10, 6))
 
+    # label mapping
+    label_mapping = {
+    'q_table_lr0.1_df0.6.json': 'Learning Rate 0.1 & Discount Factor 0.6',
+    'q_table_lr0.1_df0.9.json': 'Learning Rate 0.1 & Discount Factor 0.9',
+    'q_table_lr0.3_df0.6.json': 'Learning Rate 0.3 & Discount Factor 0.6',
+    'q_table_lr0.3_df0.9.json': 'Learning Rate 0.3 & Discount Factor 0.9'
+    }
+
     for filename, style in zip(filenames, styles):
         filepath = os.path.join(base_path, filename)
         with open(filepath, 'r') as f:
@@ -116,7 +124,8 @@ def plot_collisions_combined():
         x = list(range(200, 2001, 200))
 
         # Lägg till label baserat på filnamnet
-        label = filename.replace('q_table_', '').replace('.json', '')
+        # label = filename.replace('q_table_', '').replace('.json', '')
+        label = label_mapping.get(filename, filename)
 
         plt.plot(x, collision_data, style, label=label)
 
