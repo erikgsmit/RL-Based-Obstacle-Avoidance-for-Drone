@@ -2,14 +2,14 @@
     "learning_rate": 0.1,
     "discount_factor": 0.9,
     "epsilon": 0.1,
-    "episode_count": 2001,
+    "episode_count": 4001,
     "state_space_size": [
         21,
         21,
         11
     ],
     "action_space_size": 6,
-    "collision_count": 85,
+    "collision_count": 0,
     "collision_history": [
         1,
         107,
@@ -21,7 +21,17 @@
         110,
         80,
         80,
-        85
+        85,
+        143,
+        68,
+        72,
+        66,
+        53,
+        66,
+        102,
+        92,
+        58,
+        44
     ],
     "collision_window": 200
 }
