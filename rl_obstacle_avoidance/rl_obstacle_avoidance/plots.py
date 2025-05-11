@@ -121,7 +121,8 @@ def plot_collisions_combined():
         collision_data = data['collision_history'][1:]
 
         # X-axel: 200 till 2000 med steg om 200 (10 datapunkter)
-        x = list(range(200, 2001, 200))
+        x = list(range(200, 200 + 200 * len(collision_data), 200))
+
 
         # Lägg till label baserat på filnamnet
         # label = filename.replace('q_table_', '').replace('.json', '')
@@ -129,8 +130,8 @@ def plot_collisions_combined():
 
         plt.plot(x, collision_data, style, label=label)
 
-    plt.ylim(25, 175)
-    plt.xlim(200, 2000)
+    plt.ylim(25, 220)
+    plt.xlim(200, 4000)
     plt.xlabel('Episode')
     plt.ylabel('Collision Count')
     plt.title('Collision History per Experiment')
@@ -141,6 +142,6 @@ def plot_collisions_combined():
 
 if __name__ == "__main__":
 
-    plot_moving_average('q_table_lr0.3_df0.9_episode_data', window_size=100)
+    plot_moving_average('q_table_lr0.3_df0.6_episode_data', window_size=100)
     plot_collisions_combined()
     
