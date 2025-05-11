@@ -40,7 +40,7 @@ def plot_moving_average(filename, window_size=100):
     moving_avg = np.convolve(data_np, np.ones(window_size)/window_size, mode='valid')
 
     plt.figure(figsize=(10, 5))
-    plt.plot(data, label='Original Data', alpha=0.4)
+    plt.plot(data, label='Episodic Reward', alpha=0.4)
     plt.plot(range(window_size - 1, len(data)), moving_avg, label=f'{window_size}-Point Moving Average', color='red')
     plt.xlabel('Episode')
     plt.ylabel('Score / Reward')
@@ -130,7 +130,7 @@ def plot_collisions_combined():
 
         plt.plot(x, collision_data, style, label=label)
 
-    plt.ylim(25, 220)
+    plt.ylim(0, 200)
     plt.xlim(200, 4000)
     plt.xlabel('Episode')
     plt.ylabel('Collision Count')
@@ -138,10 +138,14 @@ def plot_collisions_combined():
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
+    plt.savefig('rl_obstacle_avoidance/data/collision_history_combined.png')
     plt.show()
 
 if __name__ == "__main__":
 
+    plot_moving_average('q_table_lr0.1_df0.6_episode_data', window_size=100)
+    plot_moving_average('q_table_lr0.1_df0.9_episode_data', window_size=100)
     plot_moving_average('q_table_lr0.3_df0.6_episode_data', window_size=100)
+    plot_moving_average('q_table_lr0.3_df0.9_episode_data', window_size=100)
     plot_collisions_combined()
     
