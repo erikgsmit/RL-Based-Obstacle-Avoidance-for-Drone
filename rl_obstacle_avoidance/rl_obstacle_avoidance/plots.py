@@ -98,7 +98,7 @@ def plot_collisions_combined():
 
     # Färger eller linjestilar för att skilja kurvorna
     #styles = ['#1abc9c', '#3498db', '#9b59b6', '#34495e']
-    styles = ['#0e7490', '#2563eb', '#7c3aed', '#0f172a']
+    styles = ['#ff5733', '#2775e2', '#8ee227',  '#171818']
 
 
     
